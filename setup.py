@@ -28,7 +28,7 @@ def get_requirements()->List[str]:
 print(get_requirements())
 
 setup(
-    name="AI-TRAVEL-PLANNER",
+    name="Omni-Answer",
     version="0.0.1",
     author="mohit kumar",
     author_email="",

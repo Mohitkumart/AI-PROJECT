@@ -3,12 +3,11 @@ from langgraph.graph import StateGraph, START, END, MessagesState
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from utils.model_loader import ModelLoader
-from tools.weather_info_tool import WeatherInfoTool
-from tools.place_search_tool import PlaceSearchTool
-from tools.expense_calculator_tool import CalculatorTool
-from tools.currency_converstion_tool import CurrencyConverterTool
+from tools.calculator_tool import CalculatorTool
 
 from tools.document_reader_tool import DocumentReaderTool
+from tools.place_search_tool import PlaceSearchTool
+
 import os
 from dotenv import load_dotenv
 
@@ -16,7 +15,7 @@ load_dotenv()
 
 ## Langsmith tracking
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
-os.environ["LANGCHAIN_PROJECT"] = "TravelPlanner"
+os.environ["LANGCHAIN_PROJECT"] = "Omni-Answer"
 os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
 
 
@@ -28,26 +27,17 @@ class GraphBuilder():
         
         self.tools = []
         self.document_reader_tools = DocumentReaderTool()
-
-        # self.weather_tools = WeatherInfoTool()
-        # self.place_search_tools = PlaceSearchTool()
+        self.place_search_tools = PlaceSearchTool()
         self.calculator_tools = CalculatorTool()
-        # self.currency_converter_tools = CurrencyConverterTool()
         
         self.tools.extend([
             *self.document_reader_tools.document_reader_tool_list,
             *self.calculator_tools.calculator_tool_list,
+            *self.place_search_tools.search_anything_tool,
 
         ])
 
 
-                        # * self.weather_tools.weather_tool_list, 
-                        #    * self.place_search_tools.place_search_tool_list,
-                        #    *self.document_reader_tools.document_reader_tool_list
-                        #    * self.currency_converter_tools.currency_converter_tool_list
-                        #    *self.calculator_tools.calculator_tool_list,
-
-                        #    ])
         
         self.llm_with_tools = self.llm.bind_tools(tools=self.tools)
         
