@@ -15,4 +15,9 @@ langchain_openai
 langgraph
 langchain-google-community[places]
 
+pymupdf 
+pandas 
+openpyxl
+langsmith
+
 -e .
