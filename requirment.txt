@@ -20,4 +20,9 @@ pandas
 openpyxl
 langsmith
 
+faiss-cpu 
+openai
+sentence-transformers
+langchain-huggingface
+
 -e .

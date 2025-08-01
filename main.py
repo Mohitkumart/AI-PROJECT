@@ -8,7 +8,57 @@ import traceback
 import sys
 from typing import List, Optional
 
+from tools.document_reader_tool import DocumentReaderTool
+from utils.vectorstore_loader import create_vectorstore_from_text
+import hashlib 
+
 app = FastAPI()
+
+from utils.vectorstore_loader import (
+    create_vectorstore_from_text,
+    load_vectorstore,
+    vectorstore_exists
+)
+
+
+#  Helper: compute hash of combined document content
+def compute_hash(text: str) -> str:  # 
+    return hashlib.md5(text.encode()).hexdigest()  # 
+
+# Global vectorstore
+vectorstore = None
+doc_hash_file = "vectorstore/doc_hash.txt"  # ✅ For tracking document changes
+
+
+# ------------------------------------------------------------------
+# ✅ New hash-based smart vectorstore loader
+def compute_doc_hash(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+@app.on_event("startup")
+def startup_event():
+    global vectorstore
+
+    reader = DocumentReaderTool()
+    text = reader.get_combined_text()
+    current_hash = compute_doc_hash(text)
+
+    saved_hash = ""
+    if os.path.exists(doc_hash_file):
+        with open(doc_hash_file, "r") as f:
+            saved_hash = f.read().strip()
+
+    if saved_hash != current_hash or not vectorstore_exists():
+        print("🆕 New or changed documents found. Recreating vectorstore...")
+        vectorstore = create_vectorstore_from_text(text)
+        with open(doc_hash_file, "w") as f:
+            f.write(current_hash)
+        print("✅ Vectorstore recreated and saved.")
+    else:
+        print("✅ No document changes. Loading existing vectorstore...")
+        vectorstore = load_vectorstore()
+# ------------------------------------------------------------------
+
 
 # class QuerryRequest(BaseModel):
 #     question: str
@@ -24,15 +74,23 @@ async def querry_travel_agent(querry: QuerryRequest):
     try:
         print(f"📥 Received question: {querry.question}")
 
+        global vectorstore  # reuse shared vectorstore loaded at startup
+
         # Build graph and get app
         graph = GraphBuilder(model_provider='groq')
         react_app = graph()
+        
 
         # Save graph visualization (optional)
         png_graph = react_app.get_graph().draw_mermaid_png()
         with open("my_graph.png", "wb") as f:
             f.write(png_graph)
-        print(f"✅ Graph saved at {os.getcwd()}")
+        # print(f"✅ Graph saved at {os.getcwd()}")
+
+        # # 📄 Load documents & vectorstore
+        # reader = DocumentReaderTool()
+        # combined_text = reader.get_combined_text()
+        # vectorstore = create_vectorstore_from_text(combined_text)
 
         # Properly format message
         # messages = [{"role": "user", "content": querry.question}]
@@ -44,11 +102,20 @@ async def querry_travel_agent(querry: QuerryRequest):
         messages = querry.memory or []
         messages.append({"role": "user", "content": querry.question})
 
+        # Inject context from document search
+        relevant_docs = vectorstore.similarity_search(querry.question, k=3)  # ✅ Top 3 matching chunks
+        context = "\n\n".join([doc.page_content for doc in relevant_docs])  # ✅ Merge text chunks
+        messages.insert(0, {
+            "role": "system",
+            "content": f"Use this context:\n{context}"  # ✅ Inject retrieved doc content
+        })
+
+        #  Invoke the agent with message + RAG context
         output = react_app.invoke({"messages": messages})
         #----------
 
-        print(f"🧪 Output type: {type(output)}")
-        print(f"🧪 Output content: {output}")
+        # print(f"🧪 Output type: {type(output)}")
+        # print(f"🧪 Output content: {output}")
 
         # Extract response
         if isinstance(output, dict) and "messages" in output:

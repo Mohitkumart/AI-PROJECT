@@ -3,6 +3,7 @@ import fitz  # PyMuPDF
 import pandas as pd
 from langchain.tools import tool
 
+
 @tool
 def read_pdf(file_path: str) -> str:
     """
@@ -108,3 +109,4 @@ class DocumentReaderTool:
     @property
     def document_reader_tool_list(self):
         return self._document_reader_tool_list
+
