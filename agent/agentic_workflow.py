@@ -8,6 +8,20 @@ from tools.calculator_tool import CalculatorTool
 from tools.document_reader_tool import DocumentReaderTool
 from tools.place_search_tool import PlaceSearchTool
 
+# ##
+# from tools.mongo_tool import mongo_query_tool
+# from tools.outlook_tool import outlook_email_tool
+
+from tools.mssql_tool import (
+    mssql_query_tool,
+    get_employee_login_details,
+    get_employee_personal_details,
+    get_unit_details,
+    list_all_mssql_objects,
+    get_table_columns,
+)
+
+
 import os
 from dotenv import load_dotenv
 
@@ -20,6 +34,10 @@ os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
 
 
 class GraphBuilder():
+    """
+    Builds a LangGraph agent with integrated tools for document reading,
+    place searching, calculations, and MSSQL data access.
+    """
     def __init__(self,model_provider: str = "groq"):
         
         self.model_loader = ModelLoader(model_provider=model_provider)
@@ -29,11 +47,25 @@ class GraphBuilder():
         self.document_reader_tools = DocumentReaderTool()
         self.place_search_tools = PlaceSearchTool()
         self.calculator_tools = CalculatorTool()
+        # self.mongo_tools = [mongo_query_tool]
+        self.mssql_tools = [mssql_query_tool]
+        # self.outlook_tools = [outlook_email_tool]
+        self.mssql_tools = [
+            mssql_query_tool,
+            get_employee_login_details,
+            get_employee_personal_details,
+            get_unit_details,
+            list_all_mssql_objects,
+            get_table_columns
+        ]
         
         self.tools.extend([
             *self.document_reader_tools.document_reader_tool_list,
             *self.calculator_tools.calculator_tool_list,
             *self.place_search_tools.search_anything_tool,
+            # *self.mongo_query_tool,
+            *self.mssql_tools,
+            # *self.outlook_email_tool
 
         ])
 

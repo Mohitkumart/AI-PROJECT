@@ -69,3 +69,4 @@ Feel free to fork, improve, and send a pull request!
 ---
 
 
+"llama3-8b-8192"

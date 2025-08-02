@@ -25,4 +25,8 @@ openai
 sentence-transformers
 langchain-huggingface
 
+pyodbc
+O365
+pymongo
+
 -e .
